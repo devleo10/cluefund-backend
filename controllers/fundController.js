@@ -13,16 +13,55 @@ export const saveFund = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: 'Invalid or missing user in token' });
     }
+
+    // Check if fund already exists for this user
+    const existingFund = await Fund.findOne({ 
+      userId: req.user.id,
+      schemeCode: String(schemeCode)
+    });
+
+    if (existingFund) {
+      return res.status(400).json({ 
+        message: 'Fund already exists in portfolio',
+        success: false
+      });
+    }
+
     const newFund = new Fund({
       userId: req.user.id,
-      schemeCode,
+      schemeCode: String(schemeCode),
       schemeName,
     });
 
     await newFund.save();
-    res.status(201).json({ message: 'Fund saved successfully' });
+    res.status(201).json({ success: true, message: 'Fund saved successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error saving fund:', error);
+    
+    // Check if it's a duplicate key error
+    if (error.code === 11000) {
+      console.log('Duplicate key error details:', error.keyPattern, error.keyValue);
+      
+      // Check if the duplicate key is related to the compound index (userId + schemeCode)
+      if (error.keyPattern && (error.keyPattern.userId || error.keyPattern.schemeCode)) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Fund already exists in your portfolio' 
+        });
+      } else {
+        // Other duplicate key error
+        return res.status(400).json({ 
+          success: false,
+          message: 'Duplicate fund error' 
+        });
+      }
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to save fund',
+      error: error.message 
+    });
   }
 };
 
