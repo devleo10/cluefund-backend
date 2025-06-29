@@ -41,20 +41,25 @@ export const getSavedFunds = async (req, res) => {
 };
 
 export const removeFund = async (req, res) => {
-  const { fundId } = req.body;
+  // Accept schemeCode from body (string)
+  const { schemeCode } = req.body;
 
-  if (!fundId) {
-    return res.status(400).json({ message: 'Fund ID required' });
+  if (!schemeCode) {
+    return res.status(400).json({ message: 'Scheme code required' });
   }
 
   try {
     // Debug log
-    console.log('removeFund req.user:', req.user);
+    console.log('removeFund req.user:', req.user, 'schemeCode:', schemeCode);
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: 'Invalid or missing user in token' });
     }
-    await Fund.deleteOne({ _id: fundId, userId: req.user.id });
-    res.json({ message: 'Fund removed successfully' });
+    // Remove by userId and schemeCode
+    const result = await Fund.deleteOne({ userId: req.user.id, schemeCode: String(schemeCode) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Fund not found' });
+    }
+    res.json({ success: true, message: 'Fund removed successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
