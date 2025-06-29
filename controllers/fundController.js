@@ -34,7 +34,7 @@ export const getSavedFunds = async (req, res) => {
       return res.status(401).json({ message: 'Invalid or missing user in token' });
     }
     const funds = await Fund.find({ userId: req.user.id });
-    res.json(funds);
+    res.json({ success: true, funds });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
