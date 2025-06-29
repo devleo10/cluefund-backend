@@ -8,6 +8,11 @@ export const saveFund = async (req, res) => {
   }
 
   try {
+    // Debug log
+    console.log('saveFund req.user:', req.user);
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Invalid or missing user in token' });
+    }
     const newFund = new Fund({
       userId: req.user.id,
       schemeCode,
@@ -23,6 +28,11 @@ export const saveFund = async (req, res) => {
 
 export const getSavedFunds = async (req, res) => {
   try {
+    // Debug log
+    console.log('getSavedFunds req.user:', req.user);
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Invalid or missing user in token' });
+    }
     const funds = await Fund.find({ userId: req.user.id });
     res.json(funds);
   } catch (error) {
